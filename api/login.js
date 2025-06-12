@@ -138,8 +138,114 @@ router.get('/get/set_pz', async (ctx, res, req) => {
         }
     }
 })
-//查询用户
-router.get('/get/user', async (ctx, res, req) => {
+//添加配对
+router.get('/add/pair', async (ctx, res, req) => {
+    console.log('正在访问:' + ctx.path)
+    let request = ctx.query;
+    try {
+        console.log(request)
+        var sql = ''
+        sql += `insert into pair(account,avatar,pairAccount,pairAvatar,vipCode,date,status) values('${request.account}','${request.avatar}','${request.pairAccount}',
+        '${request.pairAvatar}','${request.vipCode}','${tools.DFormat(new Date())}','${request.status}')`
+        console.log(sql)
+        const [rows] = await pool.execute(sql);
+        //console.log(rows)
+        ctx.body = {
+            code: 0,
+            rows,
+        }
+
+    } catch (error) {
+        console.log(error)
+        ctx.body = {
+            code: 1,
+            error
+        }
+    }
+})
+//删除配对
+router.get('/del/pair', async (ctx, res, req) => {
+    console.log('正在访问:' + ctx.path)
+    let request = ctx.query;
+    try {
+        console.log(request)
+        var sql = ''
+        sql += `delete from pair where id = ${request.id}`
+        console.log(sql)
+        const [rows] = await pool.execute(sql);
+        //console.log(rows)
+        ctx.body = {
+            code: 0,
+            rows,
+        }
+    } catch (error) {
+        console.log(error)
+        ctx.body = {
+            code: 1,
+            error
+        }
+    }
+})
+//修改配对
+router.get('/set/pair', async (ctx, res, req) => {
+    console.log('正在访问:' + ctx.path)
+    let request = ctx.query;
+    try {
+        console.log(request)
+        var sql = ''
+        if(request.status) {
+            sql += `update pair set status='${request.status}' where id = ${request.id}`
+        } else {
+            sql += `update pair set account ='${request.account}',avatar='${request.avatar}',pairAccount='${request.pairAccount}',pairAvatar='${request.pairAvatar}',
+        vipCode='${request.vipCode}',status='${request.status}' where id = ${request.id}`
+        }
+        console.log(sql)
+        const [rows] = await pool.execute(sql);
+        //console.log(rows)
+        ctx.body = {
+            code: 0,
+            rows,
+        }
+    } catch (error) {
+        console.log(error)
+        ctx.body = {
+            code: 1,
+            error
+        }
+    }
+})
+//查询配对
+router.get('/get/pair', async (ctx, res, req) => {
+    console.log('正在访问:' + ctx.path)
+    let request = ctx.query;
+    try {
+        console.log(request)
+        var sql = ''
+        sql += `SELECT * FROM pair where 1=1`
+        if (request.id) {
+            sql += ` and id = '${request.id}'`
+        }
+        if (request.account) {
+            sql += ` and account = '${request.account}'`
+        }
+        console.log(sql)
+        const [rows] = await pool.execute(sql);
+        //console.log(rows)
+        sql += ` ORDER BY id DESC`
+        ctx.body = {
+            code: 0,
+            rows:rows[0],
+        }
+    } catch (error) {
+        console.log(error)
+        ctx.body = {
+            code: 1,
+            error
+        }
+    }
+})
+//查询用户列表
+router.get('/get/pairList', async (ctx, res, req) => {
     console.log('正在访问:' + ctx.path)
     let request = ctx.query;
     try {
@@ -148,6 +254,50 @@ router.get('/get/user', async (ctx, res, req) => {
         var countSql = ''
         sql += `SELECT id,account, password, inviteCode, dataError, age, gender, bankCard, money, avatar, vipCode, createDate, vipGrade, name, vipStatus, 
         likeSquare,city,remake,lineCode,pz,pz1,pz2 FROM users where 1=1`
+        countSql = `select count(id) as sum from users where 1=1`
+        if (request.pairAccount && request.pairAccount != undefined) {
+            sql += ` and pairAccount = '${request.pairAccount}'`
+            countSql += ` and pairAccount = '${request.pairAccount}'`
+        }
+        if (request.account && request.account != undefined) {
+            sql += ` and account = '${request.account}' or name = '${request.account}'`
+            countSql += ` and account = '${request.account}' or name = '${request.account}'`
+        }
+        if (request.gender) {
+            sql += ` and gender = '${request.gender}'`
+            countSql += ` and gender = '${request.gender}'`
+        }
+        if (request.pageIndex && request.pageIndex != undefined) {
+            sql += ` ORDER BY id DESC limit ${request.pageIndex * request.pageSize},${request.pageSize}`
+        }
+        console.log(request.pageIndex && request.pageIndex != undefined)
+        console.log(sql)
+
+        const [rows] = await pool.execute(sql);
+        const [countRows] = await pool.execute(countSql);
+        //console.log(rows)
+        ctx.body = {
+            code: 0,
+            rows,
+            count: countRows[0].sum
+        }
+    } catch (error) {
+        console.log(error)
+        ctx.body = {
+            code: 1,
+            error
+        }
+    }
+})
+//查询用户
+router.get('/get/user', async (ctx, res, req) => {
+    console.log('正在访问:' + ctx.path)
+    let request = ctx.query;
+    try {
+        console.log(request)
+        var sql = ''
+        var countSql = ''
+        sql += `SELECT * FROM users where 1=1`
         countSql = `select count(id) as sum from users where 1=1`
         if (request.account && request.account != undefined) {
             sql += ` and account = '${request.account}' or name = '${request.account}'`
@@ -609,6 +759,31 @@ router.get('/get/get_dating', async (ctx, res, req) => {
         }
     }
 })
+//上传证件
+router.get('/set/idCard', async (ctx, res, req) => {
+    let request = ctx.query;
+    console.log(request.user + '正在访问:' + ctx.path)
+    console.log(request)
+    var sql = ""
+    if (request.idCard) {
+        sql = `UPDATE users SET idCard='${request.idCard}' WHERE account = '${request.account}'`
+    }
+    try {
+        console.log(request)
+        console.log(sql)
+        const [rows] = await pool.execute(sql);
+        ctx.body = {
+            code: 0,
+            rows
+        }
+    } catch (error) {
+        console.log(error)
+        ctx.body = {
+            code: 1,
+            error
+        }
+    }
+})
 // 制作修改会员卡
 router.get('/get/set_user', async (ctx, res, req) => {
     let request = ctx.query;
@@ -680,7 +855,7 @@ router.get('/get/login', async (ctx) => {
             // const [sysRows] = await pool.execute(sysSql)
             // console.log(sysRows)
             let code = Math.floor(Math.random() * 900000) + 100000
-            var sql = "INSERT INTO `users`(`id`, `account`, `password`, `createDate`, `inviteCode`,`gender`,`vipGrade`,`vipCode`,money) VALUES ('','" + request.account + "','" + request.pwd + "','" + tools.DFormat(new Date()) + "','" + request.inviteCode + "','" + request.gender + "','0','"+code+"','0')"
+            var sql = "INSERT INTO `users`(`id`, `account`, `password`, `createDate`, `inviteCode`,`gender`,`vipGrade`,`vipCode`,money) VALUES ('','" + request.account + "','" + request.pwd + "','" + tools.DFormat(new Date()) + "','" + request.inviteCode + "','" + request.gender + "','0','" + code + "','6000')"
             const [rows] = await pool.execute(sql);
             if ([rows][0].affectedRows == 1) {
                 ctx.body = {

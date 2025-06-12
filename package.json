@@ -20,7 +20,7 @@
     "koa2-cors": "^2.0.6",
     "mysql2": "^3.12.0"
   },
-  "name": "node",
+  "name": "lp_om",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -29,5 +29,13 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sunshineshisan/lp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sunshineshisan/lp/issues"
+  },
+  "homepage": "https://github.com/sunshineshisan/lp#readme",
   "description": ""
 }
