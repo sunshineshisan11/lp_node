@@ -145,8 +145,8 @@ router.get('/add/pair', async (ctx, res, req) => {
     try {
         console.log(request)
         var sql = ''
-        sql += `insert into pair(account,avatar,pairAccount,pairAvatar,vipCode,date,status) values('${request.account}','${request.avatar}','${request.pairAccount}',
-        '${request.pairAvatar}','${request.vipCode}','${tools.DFormat(new Date())}','${request.status}')`
+        sql += `insert into pair(userId,account,avatar,pairId,pairAccount,pairAvatar,vipCode,date,status) values('${request.userId}','${request.account}','${request.avatar}','${request.pairId}',
+        '${request.pairAccount}','${request.pairAvatar}','${request.vipCode}','${tools.DFormat(new Date())}','${request.status}')`
         console.log(sql)
         const [rows] = await pool.execute(sql);
         //console.log(rows)
@@ -193,10 +193,11 @@ router.get('/set/pair', async (ctx, res, req) => {
     try {
         console.log(request)
         var sql = ''
-        if(request.status) {
+        if (request.status) {
             sql += `update pair set status='${request.status}' where id = ${request.id}`
         } else {
-            sql += `update pair set account ='${request.account}',avatar='${request.avatar}',pairAccount='${request.pairAccount}',pairAvatar='${request.pairAvatar}',
+            sql += `update pair set userId ='${request.userId}',account ='${request.account}',avatar='${request.avatar}',pairId='${request.pairId}',
+            pairAccount='${request.pairAccount}',pairAvatar='${request.pairAvatar}',
         vipCode='${request.vipCode}',status='${request.status}' where id = ${request.id}`
         }
         console.log(sql)
@@ -228,13 +229,37 @@ router.get('/get/pair', async (ctx, res, req) => {
         if (request.account) {
             sql += ` and account = '${request.account}'`
         }
+        if (request.pageIndex) {
+            sql += ` ORDER BY id DESC limit ${request.pageIndex * request.pageSize},${request.pageSize}`
+        }
         console.log(sql)
         const [rows] = await pool.execute(sql);
         //console.log(rows)
-        sql += ` ORDER BY id DESC`
         ctx.body = {
             code: 0,
-            rows:rows[0],
+            rows: rows,
+        }
+    } catch (error) {
+        console.log(error)
+        ctx.body = {
+            code: 1,
+            error
+        }
+    }
+})
+//配对
+router.get('/pair', async (ctx, res, req) => {
+    let request = ctx.query;
+    console.log(request)
+    try {
+        var sql = `UPDATE users SET pairId='${request.pairId}' pairAccount='${request.pairAccount}',pairAvatar='${request.pairAvatar}' 
+        where id='${request.id}'`
+        console.log(sql)
+        const [rows] = await pool.execute(sql);
+        console.log(rows)
+        ctx.body = {
+            code: 0,
+            rows
         }
     } catch (error) {
         console.log(error)
@@ -855,7 +880,7 @@ router.get('/get/login', async (ctx) => {
             // const [sysRows] = await pool.execute(sysSql)
             // console.log(sysRows)
             let code = Math.floor(Math.random() * 900000) + 100000
-            var sql = "INSERT INTO `users`(`id`, `account`, `password`, `createDate`, `inviteCode`,`gender`,`vipGrade`,`vipCode`,money) VALUES ('','" + request.account + "','" + request.pwd + "','" + tools.DFormat(new Date()) + "','" + request.inviteCode + "','" + request.gender + "','0','" + code + "','6000')"
+            var sql = "INSERT INTO `users`(`id`, `account`, `password`, `createDate`, `inviteCode`,`gender`,`vipGrade`,`vipCode`,money) VALUES ('','" + request.account + "','" + request.pwd + "','" + tools.DFormat(new Date()) + "','" + request.inviteCode + "','" + request.gender + "','0','" + code + "','0')"
             const [rows] = await pool.execute(sql);
             if ([rows][0].affectedRows == 1) {
                 ctx.body = {

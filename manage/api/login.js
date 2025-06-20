@@ -32,6 +32,31 @@ const tools = require('../../tools/index')
 //         }
 //     }
 // })
+//修改配对信息
+router.get('/set/updatePair', async (ctx, res, req) => {
+    let request = ctx.query;
+    try {
+        console.log(request)
+        var sql = ''
+        if (request.type == 0||request.type == 2) {
+            sql += `update users set pairId = '', pairAccount = '', pairAvatar = '' where id = '${request.id}'`
+        } else if (request.type == 1) {
+            sql += `update users set pairId = '${request.pairId}', pairAccount = '${request.pairAccount}', pairAvatar = '${request.pairAvatar}' where id = '${request.id}'`
+        }
+        console.log(sql)
+        const [rows] = await pool.execute(sql);
+        ctx.body = {
+            code: 0,
+            rows
+        }
+    } catch (error) {
+        console.log(error)
+        ctx.body = {
+            code: 1,
+            error
+        }
+    }
+})
 //添加配对
 router.get('/add/pair', async (ctx, res, req) => {
     console.log('正在访问:' + ctx.path)
@@ -39,7 +64,7 @@ router.get('/add/pair', async (ctx, res, req) => {
     try {
         console.log(request)
         var sql = ''
-        sql += `insert into pair(account,avatar,pairAccount,pairAvatar,vipCode,date,status) values('${request.account}','${request.avatar}','${request.pairAccount}',
+        sql += `insert into pair(account,avatar,pairId,pairAccount,pairAvatar,vipCode,date,status) values('${request.account}','${request.avatar}','${request.pairAccount}',
         '${request.pairAvatar}','${request.vipCode}','${tools.DFormat(new Date())}','${request.status}')`
         console.log(sql)
         const [rows] = await pool.execute(sql);
@@ -89,8 +114,8 @@ router.get('/set/pair', async (ctx, res, req) => {
         if(request.status) {
             sql += `update pair set status='${request.status}' where id = ${request.id}`
         } else {
-            sql += `update pair set account ='${request.account}',avatar='${request.avatar}',pairAccount='${request.pairAccount}',pairAvatar='${request.pairAvatar}',
-        vipCode='${request.vipCode}',status='${request.status}' where id = ${request.id}`
+            sql += `update pair set account ='${request.account}',avatar='${request.avatar}',pairId='${request.pairId}',pairAccount='${request.pairAccount}',
+            pairAvatar='${request.pairAvatar}',vipCode='${request.vipCode}',status='${request.status}' where id = ${request.id}`
         }
         console.log(sql)
         const [rows] = await pool.execute(sql);
@@ -113,20 +138,26 @@ router.get('/get/pair', async (ctx, res, req) => {
     let request = ctx.query;
     try {
         console.log(request)
-        var sql = ''
-        sql += `SELECT * FROM pair where 1=1`
+        var sql = 'SELECT * FROM pair where 1=1'
+        var countSql = `select count(id) as sum from pair where 1=1`
         if (request.id) {
             sql += ` and id = '${request.id}'`
+            countSql += ` and id = '${request.id}'`
         }
         if (request.account) {
             sql += ` and account = '${request.account}'`
+            countSql += ` and account = '${request.account}'`
         }
-        console.log(sql)
+        if (request.pageIndex) {
+            sql += ` ORDER BY id DESC limit ${request.pageIndex * request.pageSize},${request.pageSize}`
+        }
+        console.log(countSql)
         const [rows] = await pool.execute(sql);
-        //console.log(rows)
+        const [countRows] = await pool.execute(countSql);
         ctx.body = {
             code: 0,
-            rows,
+            rows: rows,
+            count: countRows[0].sum
         }
     } catch (error) {
         console.log(error)
@@ -755,7 +786,6 @@ router.get('/update/user', async (ctx, res, req) => {
         let pz = ''
         let pz1 = ''
         let pz2 = ''
-        console.log(request)
         if(request.vipGrade == 3) {
             pz='pz.jpg'
             pz1='pz.jpg'
